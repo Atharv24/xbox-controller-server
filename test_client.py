@@ -51,6 +51,10 @@ class XboxControllerClient:
         
         except Exception as e:
             print(f"Error in receive thread: {e}")
+        except KeyboardInterrupt:
+            print("\nStopping client...")
+        finally:
+            self.stop()
     
     def display_controller_data(self, data):
         """Display controller data in a formatted way"""
@@ -94,12 +98,9 @@ class XboxControllerClient:
     def start(self):
         """Start the client"""
         self.running = True
-        
-        # Start receiving data
-        receive_thread = threading.Thread(target=self.receive_controller_data, daemon=True)
-        receive_thread.start()
-        
         print("Receiving controller data...")
+
+        self.receive_controller_data()
         
         try:
             while self.running:
