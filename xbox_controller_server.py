@@ -4,31 +4,15 @@ Xbox Controller Input Server
 Reads Xbox controller input and sends it via UDP to a single client.
 """
 
-import socket
+import inputs
 import json
-import time
-import threading
+import socket
 import sys
-
-try:
-    import inputs
-    INPUTS_AVAILABLE = True
-except ImportError:
-    print("Warning: 'inputs' library not found. Install with: pip install inputs")
-    print("Falling back to pygame for controller input...")
-    INPUTS_AVAILABLE = False
-    try:
-        import pygame
-        PYGAME_AVAILABLE = True
-    except ImportError:
-        print("Error: Neither 'inputs' nor 'pygame' libraries are available.")
-        print("Please install one of them:")
-        print("  pip install inputs")
-        print("  pip install pygame")
-        sys.exit(1)
+import threading
+import time
 
 class XboxControllerServer:
-    def __init__(self, client_ip='127.0.0.1', client_port=5001, server_port=5000):
+    def __init__(self, client_ip, client_port, server_port):
         self.client_ip = client_ip
         self.client_port = client_port
         self.server_port = server_port
@@ -47,10 +31,7 @@ class XboxControllerServer:
         }
         
         # Initialize controller input method
-        if INPUTS_AVAILABLE:
-            self.init_inputs()
-        elif PYGAME_AVAILABLE:
-            self.init_pygame()
+        self.init_inputs()
         
         # Initialize UDP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -70,27 +51,10 @@ class XboxControllerServer:
             print(f"Found Xbox controller: {devices[0].name}")
         except Exception as e:
             print(f"Error initializing controller with 'inputs': {e}")
-            print("Falling back to pygame...")
-            self.init_pygame()
-    
-    def init_pygame(self):
-        """Initialize using pygame"""
-        pygame.init()
-        pygame.joystick.init()
-        
-        if pygame.joystick.get_count() == 0:
-            raise Exception("No controllers found")
-        
-        self.joystick = pygame.joystick.Joystick(0)
-        self.joystick.init()
-        print(f"Found controller: {self.joystick.get_name()}")
     
     def read_controller_inputs(self):
         """Read controller input using the available method"""
-        if INPUTS_AVAILABLE:
-            return self.read_inputs_library()
-        elif PYGAME_AVAILABLE:
-            return self.read_pygame()
+        return self.read_inputs_library()
     
     def read_inputs_library(self):
         """Read controller input using 'inputs' library"""
@@ -101,62 +65,28 @@ class XboxControllerServer:
         except Exception as e:
             print(f"Error reading controller input: {e}")
     
-    def read_pygame(self):
-        """Read controller input using pygame"""
-        pygame.event.pump()
-        
-        # Left stick
-        self.controller_data['left_stick']['x'] = round(self.joystick.get_axis(0), 3)
-        self.controller_data['left_stick']['y'] = round(self.joystick.get_axis(1), 3)
-        
-        # Right stick
-        self.controller_data['right_stick']['x'] = round(self.joystick.get_axis(2), 3)
-        self.controller_data['right_stick']['y'] = round(self.joystick.get_axis(3), 3)
-        
-        # Triggers
-        self.controller_data['triggers']['left'] = round(self.joystick.get_axis(4), 3)
-        self.controller_data['triggers']['right'] = round(self.joystick.get_axis(5), 3)
-        
-        # Buttons
-        self.controller_data['buttons']['A'] = bool(self.joystick.get_button(0))
-        self.controller_data['buttons']['B'] = bool(self.joystick.get_button(1))
-        self.controller_data['buttons']['X'] = bool(self.joystick.get_button(2))
-        self.controller_data['buttons']['Y'] = bool(self.joystick.get_button(3))
-        self.controller_data['buttons']['LB'] = bool(self.joystick.get_button(4))
-        self.controller_data['buttons']['RB'] = bool(self.joystick.get_button(5))
-        self.controller_data['buttons']['back'] = bool(self.joystick.get_button(6))
-        self.controller_data['buttons']['start'] = bool(self.joystick.get_button(7))
-        self.controller_data['buttons']['left_stick_click'] = bool(self.joystick.get_button(8))
-        self.controller_data['buttons']['right_stick_click'] = bool(self.joystick.get_button(9))
-        
-        # D-pad (hat)
-        hat = self.joystick.get_hat(0)
-        self.controller_data['buttons']['dpad_up'] = hat[1] == 1
-        self.controller_data['buttons']['dpad_down'] = hat[1] == -1
-        self.controller_data['buttons']['dpad_left'] = hat[0] == -1
-        self.controller_data['buttons']['dpad_right'] = hat[0] == 1
-    
     def process_inputs_event(self, event):
         """Process events from the 'inputs' library"""
         if event.ev_type == 'Absolute':
-            if event.code == 'ABS_X':
-                self.controller_data['left_stick']['x'] = round(event.state / 32768.0, 3)
-            elif event.code == 'ABS_Y':
-                self.controller_data['left_stick']['y'] = round(event.state / 32768.0, 3)
-            elif event.code == 'ABS_RX':
-                self.controller_data['right_stick']['x'] = round(event.state / 32768.0, 3)
-            elif event.code == 'ABS_RY':
-                self.controller_data['right_stick']['y'] = round(event.state / 32768.0, 3)
-            elif event.code == 'ABS_Z':
-                self.controller_data['triggers']['left'] = round(event.state / 255.0, 3)
-            elif event.code == 'ABS_RZ':
-                self.controller_data['triggers']['right'] = round(event.state / 255.0, 3)
-            elif event.code == 'ABS_HAT0X':
-                self.controller_data['buttons']['dpad_left'] = event.state == -1
-                self.controller_data['buttons']['dpad_right'] = event.state == 1
-            elif event.code == 'ABS_HAT0Y':
-                self.controller_data['buttons']['dpad_up'] = event.state == -1
-                self.controller_data['buttons']['dpad_down'] = event.state == 1
+            match event.code:
+                case 'ABS_X':
+                    self.controller_data['left_stick']['x'] = round(event.state / 32768.0, 3)
+                case 'ABS_Y':
+                    self.controller_data['left_stick']['y'] = round(event.state / 32768.0, 3)
+                case 'ABS_RX':
+                    self.controller_data['right_stick']['x'] = round(event.state / 32768.0, 3)
+                case 'ABS_RY':
+                    self.controller_data['right_stick']['y'] = round(event.state / 32768.0, 3)
+                case 'ABS_Z':
+                    self.controller_data['triggers']['left'] = round(event.state / 255.0, 3)
+                case 'ABS_RZ':
+                    self.controller_data['triggers']['right'] = round(event.state / 255.0, 3)
+                case 'ABS_HAT0X':
+                    self.controller_data['buttons']['dpad_left'] = event.state == -1
+                    self.controller_data['buttons']['dpad_right'] = event.state == 1
+                case 'ABS_HAT0Y':
+                    self.controller_data['buttons']['dpad_up'] = event.state == -1
+                    self.controller_data['buttons']['dpad_down'] = event.state == 1
         
         elif event.ev_type == 'Key':
             button_mapping = {
@@ -230,15 +160,13 @@ class XboxControllerServer:
         self.running = False
         if hasattr(self, 'sock'):
             self.sock.close()
-        if PYGAME_AVAILABLE:
-            pygame.quit()
 
 def main():
     """Main function"""
     import argparse
     
     parser = argparse.ArgumentParser(description='Xbox Controller Input Server')
-    parser.add_argument('--client-ip', default='10.0.0.36', help='Client IP address (default: 127.0.0.1)')
+    parser.add_argument('--client-ip', default='10.0.0.36', help='Client IP address (default: 10.0.0.36)')
     parser.add_argument('--client-port', type=int, default=5001, help='Client port (default: 5001)')
     parser.add_argument('--server-port', type=int, default=5000, help='Server port (default: 5000)')
     
