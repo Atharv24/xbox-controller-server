@@ -201,23 +201,29 @@ class XboxControllerServer:
         
         except Exception as e:
             print(f"Error in send thread: {e}")
+        except KeyboardInterrupt:
+            print("Closing....")
+        finally:
+            self.stop()
     
     def start(self):
         """Start the server"""
         self.running = True
         
         # Start send thread
-        send_thread = threading.Thread(target=self.send_controller_data, daemon=True)
-        send_thread.start()
+        # send_thread = threading.Thread(target=self.send_controller_data, daemon=True)
+        # send_thread.start()
         
-        print("Server is running. Press Ctrl+C to stop.")
+        # print("Server is running. Press Ctrl+C to stop.")
+
+        self.send_controller_data()
         
-        try:
-            while self.running:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("\nShutting down server...")
-            self.stop()
+        # # try:
+        # #     while self.running:
+        # #         time.sleep(1)
+        # except KeyboardInterrupt:
+        #     print("\nShutting down server...")
+        #     self.stop()
     
     def stop(self):
         """Stop the server"""
@@ -232,7 +238,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='Xbox Controller Input Server')
-    parser.add_argument('--client-ip', default='127.0.0.1', help='Client IP address (default: 127.0.0.1)')
+    parser.add_argument('--client-ip', default='10.0.0.36', help='Client IP address (default: 127.0.0.1)')
     parser.add_argument('--client-port', type=int, default=5001, help='Client port (default: 5001)')
     parser.add_argument('--server-port', type=int, default=5000, help='Server port (default: 5000)')
     
