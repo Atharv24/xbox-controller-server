@@ -63,10 +63,10 @@ class XboxControllerClient:
 
         timestamp = data.get('timestamp')
 
-        delay = timestamp - time.time()
-        self.delay_rolling_average = (self.delay_rolling_average * (self.total_packets) + delay )/(self.total_packets+1)
-        self.total_packets += 1
-        print(self.delay_rolling_average)
+        # delay = timestamp - time.time()
+        # self.delay_rolling_average = (self.delay_rolling_average * (self.total_packets) + delay )/(self.total_packets+1)
+        # self.total_packets += 1
+        # print(self.delay_rolling_average)
         
         if timestamp < self.last_message_timestamp:
             return
