@@ -16,6 +16,7 @@ class XboxControllerClient:
         self.server_port = server_port
         self.client_port = client_port
         self.running = False
+        self.last_message_timestamp = None
         
         # Create UDP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -50,6 +51,11 @@ class XboxControllerClient:
     
     def display_controller_data(self, data):
         """Display controller data in a formatted way"""
+        if self.last_message_timestamp and self.last_message_timestamp > data.get('timestamp', 0):
+            return
+        self.last_message_timestamp = data.get('timestamp', 0)
+
+        print(f"Received message at {data.get('timestamp', 0)}")
         # Clear screen (works on most terminals)
         print("\033[2J\033[H", end="")
         
