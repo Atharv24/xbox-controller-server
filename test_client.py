@@ -71,35 +71,6 @@ class XboxControllerClient:
         triggers = controller_data.get('triggers', {})
         print(f"Triggers:    L={triggers.get('left', 0):6.3f} R={triggers.get('right', 0):6.3f}")
         
-        # Display buttons
-        buttons = controller_data.get('buttons', {})
-        print("\nButtons:")
-        
-        # Main buttons
-        main_buttons = ['A', 'B', 'X', 'Y']
-        main_status = [buttons.get(btn, False) for btn in main_buttons]
-        print(f"  Main:      {' '.join([f'{btn}:{("ON" if status else "OFF"):3}' for btn, status in zip(main_buttons, main_status)])}")
-        
-        # Shoulder buttons
-        shoulder_buttons = ['LB', 'RB']
-        shoulder_status = [buttons.get(btn, False) for btn in shoulder_buttons]
-        print(f"  Shoulder:  {' '.join([f'{btn}:{("ON" if status else "OFF"):3}' for btn, status in zip(shoulder_buttons, shoulder_status)])}")
-        
-        # System buttons
-        system_buttons = ['start', 'back', 'guide']
-        system_status = [buttons.get(btn, False) for btn in system_buttons]
-        print(f"  System:    {' '.join([f'{btn}:{("ON" if status else "OFF"):3}' for btn, status in zip(system_buttons, system_status)])}")
-        
-        # Stick clicks
-        stick_buttons = ['left_stick_click', 'right_stick_click']
-        stick_status = [buttons.get(btn, False) for btn in stick_buttons]
-        print(f"  Stick:     {' '.join([f'{btn}:{("ON" if status else "OFF"):3}' for btn, status in zip(stick_buttons, stick_status)])}")
-        
-        # D-pad
-        dpad_buttons = ['dpad_up', 'dpad_down', 'dpad_left', 'dpad_right']
-        dpad_status = [buttons.get(btn, False) for btn in dpad_buttons]
-        print(f"  D-pad:     {' '.join([f'{btn}:{("ON" if status else "OFF"):3}' for btn, status in zip(dpad_buttons, dpad_status)])}")
-        
         print("\n" + "=" * 60)
         print("Press Ctrl+C to exit")
     
