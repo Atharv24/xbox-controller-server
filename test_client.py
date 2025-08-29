@@ -16,8 +16,11 @@ class XboxControllerClient:
         self.server_port = server_port
         self.client_port = client_port
         self.running = False
-        self.last_message_timestamp = None
-        
+        self.last_message_timestamp = 0
+
+        self.delay_rolling_average = 0
+        self.total_packets = 0
+
         # Create UDP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.settimeout(1.0)
@@ -51,19 +54,24 @@ class XboxControllerClient:
     
     def display_controller_data(self, data):
         """Display controller data in a formatted way"""
-        if self.last_message_timestamp and self.last_message_timestamp > data.get('timestamp', 0):
-            return
-        self.last_message_timestamp = data.get('timestamp', 0)
-
-        print(f"Received message at {data.get('timestamp', 0)}")
         # Clear screen (works on most terminals)
         print("\033[2J\033[H", end="")
+
+        timestamp = data.get('timestamp')
+
+        delay = timestamp - time.time()
+        self.delay_rolling_average = (self.delay_rolling_average * (self.total_packets) + delay )/(self.total_packets+1)
+        self.total_packets += 1
+        print(self.delay_rolling_average)
         
-        timestamp = data.get('timestamp', 0)
+        if timestamp < self.last_message_timestamp:
+            return
+        self.last_message_timestamp = timestamp
+        
         controller_data = data.get('controller_data', {})
         
         print("=" * 60)
-        print(f"Xbox Controller Data - {time.strftime('%H:%M:%S', time.localtime(timestamp))}")
+        print(f"Xbox Controller Data")
         print("=" * 60)
         
         # Display sticks
@@ -76,7 +84,10 @@ class XboxControllerClient:
         # Display triggers
         triggers = controller_data.get('triggers', {})
         print(f"Triggers:    L={triggers.get('left', 0):6.3f} R={triggers.get('right', 0):6.3f}")
-        
+       
+        buttons = controller_data.get('buttons', {})
+        print(buttons)
+
         print("\n" + "=" * 60)
         print("Press Ctrl+C to exit")
     
@@ -108,7 +119,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='Xbox Controller Test Client')
-    parser.add_argument('--server-ip', default='127.0.0.1', help='Server IP address (default: 127.0.0.1)')
+    parser.add_argument('--server-ip', default='10.0.0.131', help='Server IP address (default: 127.0.0.1)')
     parser.add_argument('--server-port', type=int, default=5000, help='Server port (default: 5000)')
     parser.add_argument('--client-port', type=int, default=5001, help='Client port (default: 5001)')
     
