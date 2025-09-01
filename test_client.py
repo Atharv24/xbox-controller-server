@@ -10,6 +10,87 @@ import time
 import threading
 import sys
 
+import RPi.GPIO as GPIO
+
+# Set the GPIO mode to BCM. This refers to the GPIO numbering scheme,
+# not the physical pin numbers.
+# BCM pin numbers:
+# GPIO 17 (physical pin 11)
+# GPIO 27 (physical pin 13)
+# GPIO 18 (physical pin 12)
+GPIO.setmode(GPIO.BCM)
+
+# Define the GPIO pins connected to the L298N driver's input pins
+# IN1 (Input 1) -> GPIO 17
+# IN2 (Input 2) -> GPIO 27
+# ENA (Enable A) -> GPIO 18 (or a PWM pin for speed control)
+PIN_IN1 = 17
+PIN_IN2 = 27
+PIN_ENA = 18
+
+PIN_IN3 = 16
+PIN_IN4 = 26
+PIN_ENB = 19
+
+# Set up the defined GPIO pins as output pins
+GPIO.setup(PIN_IN1, GPIO.OUT)
+GPIO.setup(PIN_IN2, GPIO.OUT)
+GPIO.setup(PIN_ENA, GPIO.OUT)
+
+GPIO.setup(PIN_IN3, GPIO.OUT)
+GPIO.setup(PIN_IN4, GPIO.OUT)
+GPIO.setup(PIN_ENB, GPIO.OUT)
+
+# Create a PWM object for the enable pin to control motor speed
+# A frequency of 100 Hz is a good starting point
+pwm_left = GPIO.PWM(PIN_ENA, 100)
+pwm_right = GPIO.PWM(PIN_ENB, 100)
+
+# Start the PWM with a duty cycle of 0 (motor is off initially)
+pwm_left.start(0)
+pwm_right.start(0)
+
+def forward(speed=100):
+    """
+    Drives the motor in the forward direction.
+
+    Args:
+        speed (int): The PWM duty cycle from 0 to 100.
+    """
+    print("Moving motor forward...")
+    GPIO.output(PIN_IN1, GPIO.HIGH)
+    GPIO.output(PIN_IN2, GPIO.LOW)
+    
+    GPIO.output(PIN_IN3, GPIO.LOW)
+    GPIO.output(PIN_IN4, GPIO.HIGH)
+
+    pwm_left.ChangeDutyCycle(speed)
+    pwm_right.ChangeDutyCycle(speed)
+
+def backward(speed=100):
+    """
+    Drives the motor in the backward direction.
+
+    Args:
+        speed (int): The PWM duty cycle from 0 to 100.
+    """
+    print("Moving motor backward...")
+    GPIO.output(PIN_IN1, GPIO.LOW)
+    GPIO.output(PIN_IN2, GPIO.HIGH)
+    
+    GPIO.output(PIN_IN3, GPIO.HIGH)
+    GPIO.output(PIN_IN4, GPIO.LOW)
+
+    pwm_left.ChangeDutyCycle(speed)
+    pwm_right.ChangeDutyCycle(speed)
+
+def stop():
+    """
+    Stops the motor by setting the enable pin to LOW.
+    """
+    print("Stopping motor...")
+    pwm_left.ChangeDutyCycle(0)
+    pwm_right.ChangeDutyCycle(0)
 
 class XboxControllerClient:
     def __init__(self, server_ip='127.0.0.1', server_port=5000, client_port=5001):
@@ -92,6 +173,10 @@ class XboxControllerClient:
         triggers = controller_data.get('triggers', {})
         print(
             f"Triggers:    L={triggers.get('left', 0):6.3f} R={triggers.get('right', 0):6.3f}")
+        right_trigger_mag = triggers.get('right', 0) * 100
+        
+        print("RIGHT TRIGGER", right_trigger_mag)
+        forward(right_trigger_mag)
 
         buttons = controller_data.get('buttons', {})
         print(buttons)
