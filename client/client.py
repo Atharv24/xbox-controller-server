@@ -97,9 +97,15 @@ class XboxControllerClient:
         print(
             f"Triggers:    L={triggers.get('left', 0):6.3f} R={triggers.get('right', 0):6.3f}")
         right_trigger_mag = triggers.get('right', 0) * 100
+        left_trigger_mag = triggers.get('left', 0) * 100
 
         print("RIGHT TRIGGER", right_trigger_mag)
-        self.motor_controller.forward(right_trigger_mag)
+        print("LEFT TRIGGER", left_trigger_mag)
+
+        if right_trigger_mag > 0:
+            self.motor_controller.forward(right_trigger_mag)
+        else:
+            self.motor_controller.backward(left_trigger_mag)
 
         buttons = controller_data.get('buttons', {})
         print(buttons)

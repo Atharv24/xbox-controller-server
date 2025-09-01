@@ -79,7 +79,9 @@ class XboxControllerServer:
     def _send_controller_data_loop(self):
         """Send controller data to clients at 60 FPS"""
         try:
+            print("Sending controller data loop started")
             while self.running:
+                print("Sending controller data loop running")
                 # Get current controller state
                 controller_state = self.controller_input.get_controller_state()
 
@@ -88,6 +90,8 @@ class XboxControllerServer:
                     'timestamp': time.time(),
                     'controller_data': controller_state
                 }
+
+                print(data)
 
                 # Send to client
                 self.network_server.send_data(data)
