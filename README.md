@@ -41,28 +41,38 @@ A Python application that reads Xbox controller input and sends it via UDP to a 
 
 1. **Run the server** (defaults to localhost):
    ```bash
-   python xbox_controller_server.py
+   python run_server.py
+   ```
+   
+   Or run directly from the server directory:
+   ```bash
+   python server/server.py
    ```
 
 2. **Optional command-line arguments**:
    ```bash
-   python xbox_controller_server.py --client-ip 192.168.1.100 --client-port 5001 --server-port 5000
+   python run_server.py --client-ip 192.168.1.100 --client-port 5001 --server-port 5000
    ```
 
    - `--client-ip`: IP address of the client (default: 127.0.0.1)
    - `--client-port`: Port the client is listening on (default: 5001)
    - `--server-port`: Port the server binds to (default: 5000)
 
-### Running the Test Client
+### Running the Client
 
-1. **In a separate terminal, run the test client**:
+1. **In a separate terminal, run the client**:
    ```bash
-   python test_client.py
+   python run_client.py
+   ```
+   
+   Or run directly from the client directory:
+   ```bash
+   python client/client.py
    ```
 
 2. **Optional client arguments**:
    ```bash
-   python test_client.py --server-ip 192.168.1.50 --server-port 5000 --client-port 5001
+   python run_client.py --server-ip 192.168.1.50 --server-port 5000 --client-port 5001
    ```
 
 3. **Move your controller** and watch the real-time data display
@@ -73,12 +83,12 @@ For communication between different computers:
 
 1. **Server computer**: Run the server with the client's IP address
    ```bash
-   python xbox_controller_server.py --client-ip 192.168.1.100
+   python run_server.py --client-ip 192.168.1.100
    ```
 
 2. **Client computer**: Run the client with the server's IP address
    ```bash
-   python test_client.py --server-ip 192.168.1.50
+   python run_client.py --server-ip 192.168.1.50
    ```
 
 ## Data Format
@@ -113,6 +123,25 @@ The server sends JSON data with the following structure:
 }
 ```
 
+## Project Structure
+
+```
+controller-server/
+├── client/                    # Client package
+│   ├── __init__.py           # Package initialization
+│   ├── client.py             # Xbox controller client
+│   └── motor_controller.py   # Motor control module
+├── server/                    # Server package
+│   ├── __init__.py           # Package initialization
+│   ├── server.py             # Main server
+│   ├── controller_input.py   # Controller input module
+│   └── network_server.py     # Network communication module
+├── run_client.py             # Client launcher script
+├── run_server.py             # Server launcher script
+├── requirements.txt          # Python dependencies
+└── README.md                # This file
+```
+
 ## Creating Your Own Client
 
 Here's a simple example of how to create a custom client:
@@ -133,6 +162,50 @@ while True:
     # Process the controller data
     left_stick = controller_data['controller_data']['left_stick']
     print(f"Left stick: {left_stick}")
+```
+
+### Using the Motor Controller
+
+The client package includes a `MotorController` class for controlling motors via GPIO:
+
+```python
+from client.motor_controller import MotorController
+
+# Initialize motor controller
+motor = MotorController()
+
+# Control motors
+motor.forward(50)  # 50% speed forward
+motor.backward(75) # 75% speed backward
+motor.stop()       # Stop motors
+
+# Cleanup (automatically handled on exit)
+motor.cleanup()
+```
+
+### Using the Server Components
+
+The server package includes modular components that can be used independently:
+
+```python
+from server.controller_input import ControllerInput
+from server.network_server import NetworkServer
+
+# Use controller input independently
+controller = ControllerInput()
+controller.init_pygame()
+controller.start()
+
+# Get controller state
+state = controller.get_controller_state()
+print(f"Left stick: {state['left_stick']}")
+
+# Use network server independently
+network = NetworkServer('127.0.0.1', 5001, 5000)
+network.start()
+
+# Send custom data
+network.send_data({'custom': 'data'})
 ```
 
 ## Troubleshooting
