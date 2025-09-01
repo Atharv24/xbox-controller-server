@@ -127,6 +127,48 @@ class MotorController:
         self.pwm_left.ChangeDutyCycle(speed)
         self.pwm_right.ChangeDutyCycle(speed)
 
+    def right(self, speed=100):
+        """
+        Drives the motor in the right direction.
+
+        Args:
+            speed (int): The PWM duty cycle from 0 to 100.
+        """
+        if not self._initialized or not GPIO_AVAILABLE:
+            print("Motor controller not initialized")
+            return
+
+        print("Moving motor right...")
+        GPIO.output(self.LEFT_BACKWARD, GPIO.LOW)
+        GPIO.output(self.LEFT_FORWARD, GPIO.HIGH)
+
+        GPIO.output(self.RIGHT_BACKWARD, GPIO.HIGH)
+        GPIO.output(self.RIGHT_FORWARD, GPIO.LOW)
+
+        self.pwm_left.ChangeDutyCycle(speed)
+        self.pwm_right.ChangeDutyCycle(speed)
+
+    def left(self, speed=100):
+        """
+        Drives the motor in the left direction.
+
+        Args:
+            speed (int): The PWM duty cycle from 0 to 100.
+        """
+        if not self._initialized or not GPIO_AVAILABLE:
+            print("Motor controller not initialized")
+            return
+
+        print("Moving motor left...")
+        GPIO.output(self.LEFT_BACKWARD, GPIO.HIGH)
+        GPIO.output(self.LEFT_FORWARD, GPIO.LOW)
+
+        GPIO.output(self.RIGHT_BACKWARD, GPIO.LOW)
+        GPIO.output(self.RIGHT_FORWARD, GPIO.HIGH)
+
+        self.pwm_left.ChangeDutyCycle(speed)
+        self.pwm_right.ChangeDutyCycle(speed)
+
     def stop(self):
         """
         Stops the motor by setting the enable pin to LOW.

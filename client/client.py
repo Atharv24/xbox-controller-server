@@ -89,6 +89,11 @@ class XboxControllerClient:
 
         print(
             f"Left Stick:  X={left_stick.get('x', 0):6.3f} Y={left_stick.get('y', 0):6.3f}")
+        if left_stick.get('x', 0) > 0:
+            self.motor_controller.right(left_stick.get('x', 0) * 100)
+        else:
+            self.motor_controller.left(left_stick.get('x', 0) * 100 * -1)
+
         print(
             f"Right Stick: X={right_stick.get('x', 0):6.3f} Y={right_stick.get('y', 0):6.3f}")
 
